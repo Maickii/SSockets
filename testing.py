@@ -5,12 +5,20 @@ import sys
 import socket
 from time import sleep
 
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+
 HOST = '127.0.0.1'  # Standard loopback interface address (localhost)
 PORT = 65432        # Port to listen on (non-privileged ports are > 1023)
 
 #parent proccess will listen for data sent by the child through the socket.
 #Once the data has been read the parent proccess will terminate
 def parent_proc():
+	parent_private_key = ec.generate_private_key(ec.SECP384R1(), default_backend())
+	#parent_public_key = parent_private_key.public_key() #parent public key is not needed as we do not want to send data to the child
 	with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 		s.bind((HOST, PORT))
 		s.listen()
@@ -28,8 +36,13 @@ def parent_proc():
 				print("]")
 
 def child_proc():
+	child_private_key = ec.generate_private_key(ec.SECP384R1(), default_backend())
+	child_public_key = child_private_key.public_key()
 	with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 		s.connect((HOST, PORT))
+		print("CHILD attempting to send public key")
+		child_public_key_bytes = child_public_key.public_bytes(serialization.Encoding.PEM, serialization.PublicFormat.SubjectPublicKeyInfo)
+		s.sendall(child_public_key_bytes)
 		i = 0
 		while True:
 			print("CHILD sending data")
