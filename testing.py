@@ -1,10 +1,17 @@
 #!/usr/bin/env python3
 
+#lots of help came from:
+#https://cryptography.io/en/latest/hazmat/primitives/asymmetric/ec/
+#https://realpython.com/python-sockets/
+#https://docs.python.org/3/library/socket.html#socket.socket.sendall
 import os
 import sys
 import socket
 from time import sleep
+import base64
+from base64 import b64encode
 
+from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
@@ -26,6 +33,29 @@ def parent_proc():
 		conn, addr = s.accept()
 		if conn:
 			print('PARENT: Connected by', addr)
+			child_public_key_bytes = conn.recv(1024*4)
+			print("PARENT: child sent the following public key")
+			print(child_public_key_bytes)
+			child_public_key = serialization.load_pem_public_key(child_public_key_bytes, backend=default_backend())
+			print("PARENT: printing the public key after converting to a python object")
+
+			if child_public_key:
+				print(child_public_key) # should print something like <cryptography.hazmat.backends.openssl.ec._EllipticCurvePublicKey object at 0x7fc9d9d62550>
+				#we have the child's public key. now we can perform the exchange and ready to receive encrypted data
+				shared_key = parent_private_key.exchange(ec.ECDH(), child_public_key)
+				derived_key = HKDF(
+					algorithm=hashes.SHA256(),
+					length=32,
+					salt=None,
+					info=b'handshake data',
+					backend=default_backend()
+				).derive(shared_key)
+				print(derived_key)
+				f = Fernet(base64.urlsafe_b64encode(derived_key))
+				encrypted_data = f.encrypt(b"my deep dark secret")
+				print(encrypted_data)
+				print(f.decrypt(encrypted_data))
+
 		while conn:
 			while True:
 				data = conn.recv(1024*4)
@@ -40,9 +70,11 @@ def child_proc():
 	child_public_key = child_private_key.public_key()
 	with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 		s.connect((HOST, PORT))
-		print("CHILD attempting to send public key")
 		child_public_key_bytes = child_public_key.public_bytes(serialization.Encoding.PEM, serialization.PublicFormat.SubjectPublicKeyInfo)
+		print("CHILD is about to send the following public key")
+		print(child_public_key_bytes)
 		s.sendall(child_public_key_bytes)
+		sleep(1)
 		i = 0
 		while True:
 			print("CHILD sending data")
