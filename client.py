@@ -22,6 +22,12 @@ from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 HOST = '127.0.0.1'  # Standard loopback interface address (localhost)
 PORT = 60000        # Port to listen on (non-privileged ports are > 1023)
 
+def usage():
+	print("Usage: ")
+	print("Usage: " + sys.argv[0])
+	print("       " + sys.argv[0] + " [plain|encrypted] <message>")
+	sys.exit(1)
+
 def connect_to_server():
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	s.connect((HOST, PORT))
@@ -41,23 +47,44 @@ def client_exchange_keys(connected_socket, public_key):
 	server_public_key = serialization.load_pem_public_key(server_public_key_bytes, backend=default_backend())
 	return server_public_key
 
-def client():
+def client(message, encryption):
 	client_private_key = ec.generate_private_key(ec.SECP384R1(), default_backend())
 	client_public_key = client_private_key.public_key()
 	connected_socket = connect_to_server()
-	server_public_key = client_exchange_keys(connected_socket, client_public_key)
-	if server_public_key:
-		shared_key = client_private_key.exchange(ec.ECDH(), server_public_key)
-		derived_key = HKDF(
-			algorithm=hashes.SHA256(),
-			length=32,
-			salt=None,
-			info=b'handshake data',
-			backend=default_backend()
-		).derive(shared_key)
-		f = Fernet(base64.urlsafe_b64encode(derived_key))
-		encrypted_data = f.encrypt(b"arrays start at 0. anyone who disagrees is a heretic.")
-		connected_socket.sendall(encrypted_data)
+	if encryption is True:
+		server_public_key = client_exchange_keys(connected_socket, client_public_key)
+		if server_public_key:
+			shared_key = client_private_key.exchange(ec.ECDH(), server_public_key)
+			derived_key = HKDF(
+				algorithm=hashes.SHA256(),
+				length=32,
+				salt=None,
+				info=b'handshake data',
+				backend=default_backend()
+			).derive(shared_key)
+			f = Fernet(base64.urlsafe_b64encode(derived_key))
+			if message == "":
+				message = b"arrays start at 0. anyone who disagrees is a heretic."
+			encrypted_data = f.encrypt(message)
+			connected_socket.sendall(encrypted_data)
+	else:
+		connected_socket.sendall(message)
 
+if len(sys.argv) is not 1 and len(sys.argv) is not 3:
+	usage()
 
-client()
+message = ""
+encryption = True
+
+if len(sys.argv) > 1:
+	if sys.argv[1] == "plain":
+		encryption = False
+	elif sys.argv[1] == "encrypted":
+		encryption = True
+	else:
+		usage()
+	message = sys.argv[2]
+	message = message.encode('utf-8')
+
+#sys.exit(0)
+client(message, encryption)
