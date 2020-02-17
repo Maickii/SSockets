@@ -35,7 +35,11 @@ def server_exchange_keys(conn, public_key):
 	client_public_key_bytes = conn.recv(1024*4)
 	print("SERVER: received the following public key")
 	print(client_public_key_bytes)
-	client_public_key = serialization.load_pem_public_key(client_public_key_bytes, backend=default_backend())
+	try:
+		client_public_key = serialization.load_pem_public_key(client_public_key_bytes, backend=default_backend())
+	except:
+		print("SERVER: Could not serialize client's public key. perhaps that was not a key")
+		return None
 	server_public_key_bytes = public_key.public_bytes(serialization.Encoding.PEM, serialization.PublicFormat.SubjectPublicKeyInfo)
 	print("SERVER: public key about to be sent")
 	print(server_public_key_bytes)
