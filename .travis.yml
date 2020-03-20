@@ -9,7 +9,7 @@ dist: bionic
 os: linux
 
 #before_install: ./.ci/${TRAVIS_OS_NAME}-setup.sh
-script: sudo ./tests/legacy/test.sh && ./tests/new_api/test.sh
+script: sudo ./tests/legacy/test.sh && sudo ./tests/new_api/test.sh
 
 install:
     - sudo apt-get install python3-pip
