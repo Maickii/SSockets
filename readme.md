@@ -6,6 +6,7 @@ This library is for educational purposes only! For real use of encryption over a
 
 # Getting Started
 Clone Repo `git clone https://github.com/Maickii/SSockets.git`
+
 Check out the  [TravisCI Instance](https://travis-ci.com/github/Maickii/SSockets "TravisCI Instance")
 
 # Linux dependencies:
@@ -24,14 +25,14 @@ sudo pip3 install cryptography
 ```bash
 sudo apt-get install tshark
 ```
-#Running tests
+# Running tests
 Run a simple test on legacy code. Root access is required for tshark.
 ```bash
 sudo ./tests/legacy/test.sh
 ```
 This test will perform the following actions
-1. Spawn a server proccess in the background that will listen in for incoming connections on localhost (loopback interface) on port 60000
+1. Spawn a server process in the background that will listen in for incoming connections on localhost (loopback interface) on port 60000
 2. Start tshark on the background and scan all packet traffic going through the loopback interface
-3. Start a client process that will attempt to comunicate with the server process 2 ttimes via the loopback interface.
-	1. The first time the client communicates with the server, the client will send a plaintext string to make sure that we can succesfully communicate with the server over the loopback interface and that tshark is capable of catching that plaintext string. The test fails if tshark does not catch the string
-	1. The second time the client communicates with the server, the client will perform a public key exchange with the server, derive a shared key, and then encrypt the same plaintext string on part (i), and finally send the now encrypted string over to the server. tshark will inform if it sees the same plaintext data. The test fails if tshark manages to catch the plaintext string
+3. Start a client process that will attempt to communicate with the server process 2 times via the loopback interface.
+    1. The first time the client communicates with the server, the client will send a plaintext string to make sure that we can successfully communicate with the server over the loopback interface and that tshark is capable of catching that plaintext string. The test fails if tshark does not catch the string
+    1. The second time the client communicates with the server, the client will perform a public key exchange with the server, derive a shared key, and then encrypt the same plaintext string on part (i), and finally send the now encrypted string over to the server. tshark will inform it if it sees the same plaintext data. The test fails if tshark manages to catch the plaintext string
