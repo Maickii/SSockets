@@ -1,0 +1,12 @@
+# default values for all jobs
+language: python
+
+python:
+  - "3.6"
+
+dist: bionic
+
+os: linux
+
+#before_install: ./.ci/${TRAVIS_OS_NAME}-setup.sh
+script: ./tests/legacy/test.sh
