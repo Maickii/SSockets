@@ -73,3 +73,6 @@ This test will perform the following actions
     
     
 An alternative test can be invoked by running `./tests/new_api/test.sh`
+
+# Bugs
+You may run into errors such as `OSError: [Errno 98] Address already in use`. This is _probably_ due to the server not cleaning up properly on exit. If you do get this error just wait 5 minutes and try again. The kernel will clean up sometime after the process has exited. This is a known bug that we are trying to fix
