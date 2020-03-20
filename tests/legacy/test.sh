@@ -1,15 +1,17 @@
+#!/bin/bash
+
 run_test () { # <encrypted|plain> <message>
-	python server.py > /dev/null &
+	python3 server.py > /dev/null &
 	pid=$!
 	sleep 1
 	tshark -i lo -Y 'tcp.flags.push == 1 and tcp.flags.ack == 1' -T fields -e data -a duration:3 > out.txt &
 	sleep 1
-	python client.py "$1" "$2" > /dev/null
+	python3 client.py "$1" "$2" > /dev/null
 	sleep 4
 
 	kill -9 "$pid"
 
-	python -u hex_to_ascii.py | tee /dev/tty | grep -q "$2"
+	python3 -u hex_to_ascii.py | tee /dev/tty | grep -q "$2"
 } 2> /dev/null
 
 string="Arrays start at 0. Anyone who disagrees is practising heresy and must be punished at the stake."
@@ -17,7 +19,7 @@ string="Arrays start at 0. Anyone who disagrees is practising heresy and must be
 test_num=1
 
 debug_test () {
-	echo "============================================================================================   Running test ($test_num/2)  ============================================================================================"
+	echo "======================================================================================   Running test ($test_num/2)  ======================================================================================"
 	echo "Sending the following marker string to server (using $1): \"$string\"."
 	echo ""
 	echo "START WIRESHARK OUTPUT"
@@ -44,22 +46,11 @@ debug_test () {
 			echo "As expected, could not find the marker string in the encrypted communication between the client and server."
 		fi
 	fi
-	echo "============================================================================================   Done running test ($test_num/2)  ========================================================================================"
+	echo "======================================================================================   Done running test ($test_num/2)  =================================================================================="
 	test_num=$((test_num+1))
 	return $stat
 }
 
-debug_test plain
-err=$?
+cd tests/legacy/
 
-echo ""
-echo ""
-echo ""
-echo ""
-
-if debug_test encrypted
-then
-	exit $err
-else
-	exit 1
-fi
+debug_test plain && echo -en "\n\n\n\n" && ! debug_test encrypted
