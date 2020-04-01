@@ -20,25 +20,32 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 
 class server:
-	def __init__(self, host, port):
+	def __init__(self, host, port, alg = "ecdh"):
 		self.__host = host
 		self.__port = port
-		self.__server_private_key = ec.generate_private_key(ec.SECP384R1(), default_backend())
-		self.__server_public_key = self.__server_private_key.public_key()
-		self.__socket = self.__bind_socket()
-		self.__conn, self.__addr = self.__connect_to_client(self.__socket)
-		self.__client_public_key = self.__server_exchange_keys(self.__conn, self.__server_public_key)
-		if self.__client_public_key:
-			#we have the child's public key. now we can perform the exchange and ready to receive encrypted data
-			self.__shared_key = self.__server_private_key.exchange(ec.ECDH(), self.__client_public_key)
-		self.__derived_key = HKDF(
-			algorithm=hashes.SHA256(),
-			length=32,
-			salt=None,
-			info=b'handshake data',
-			backend=default_backend()
-		).derive(self.__shared_key)
-		self.__f = Fernet(base64.urlsafe_b64encode(self.__derived_key))
+		if alg == "ecdh":
+			self.__server_private_key = ec.generate_private_key(ec.SECP384R1(), default_backend())
+			self.__server_public_key = self.__server_private_key.public_key()
+			self.__socket = self.__bind_socket()
+			self.__conn, self.__addr = self.__connect_to_client(self.__socket)
+			self.__client_public_key = self.__server_exchange_keys(self.__conn, self.__server_public_key)
+			if self.__client_public_key:
+				#we have the child's public key. now we can perform the exchange and ready to receive encrypted data
+				self.__shared_key = self.__server_private_key.exchange(ec.ECDH(), self.__client_public_key)
+			self.__derived_key = HKDF(
+				algorithm=hashes.SHA256(),
+				length=32,
+				salt=None,
+				info=b'handshake data',
+				backend=default_backend()
+			).derive(self.__shared_key)
+			self.__f = Fernet(base64.urlsafe_b64encode(self.__derived_key))
+		elif alg == "rsa":
+			self.__server_private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend())
+			self.__server_public_key = self.__server_private_key.public_key()
+			self.__conn, self.__addr = self.__connect_to_client(self.__socket)
+			self.__client_public_key = self.__server_exchange_keys(self.__conn, self.__server_public_key)
+	# end def __init__
 
 	def __bind_socket(self):
 		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
