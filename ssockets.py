@@ -69,10 +69,10 @@ class server:
 		self.__conn.sendall(encrypted_data)
 
 class client:
-	def __init__(self, host, port, alg = ecdh):
+	def __init__(self, host, port, alg = "ecdh"):
 		self.__host = host
 		self.__port = port
-		# Elliptic curve Diffie-Hellman (default)
+		# Elliptic curve Diffie-Hellman
 		if alg == ecdh:
 			self.__client_private_key = ec.generate_private_key(ec.SECP384R1(), default_backend())
 			self.__client_public_key = self.__client_private_key.public_key()
@@ -92,12 +92,13 @@ class client:
 				print("could not retrieve the server's public key") #TODO throw an exception
 		# RSA encryption
 		elif alg == rsa:
-			self.__client_private_key = rsa.generate_private_key(public exponent = 65537, key_size = 2048, backend = default_backend())
+			# generate client private key
+			self.__client_private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend())
+			# generate client public key from client private key
 			self.__client_public_key = self.__client_private_key.public_key()
 			self.__connected_socket = self.__connect_to_server()
-			self.__server_public_key = self.__client_excahnge_keys(self.__connected_socket, self.__client_public_key)
-	#end of def __init__
-			
+			self.__server_public_key = self.__client_exchange_keys(self.__connected_socket, self.__client_public_key)
+	# end def __init__
 
 	def __connect_to_server(self):
 		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
