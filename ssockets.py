@@ -73,7 +73,7 @@ class client:
 		self.__host = host
 		self.__port = port
 		# Elliptic curve Diffie-Hellman
-		if alg == ecdh:
+		if alg == "ecdh":
 			self.__client_private_key = ec.generate_private_key(ec.SECP384R1(), default_backend())
 			self.__client_public_key = self.__client_private_key.public_key()
 			self.__connected_socket = self.__connect_to_server()
@@ -91,7 +91,7 @@ class client:
 			else:
 				print("could not retrieve the server's public key") #TODO throw an exception
 		# RSA encryption
-		elif alg == rsa:
+		elif alg == "rsa":
 			# generate client private key
 			self.__client_private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend())
 			# generate client public key from client private key
