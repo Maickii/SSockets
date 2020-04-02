@@ -16,13 +16,16 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
-from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives.asymmetric import padding
+
 
 class server:
 	def __init__(self, host, port, alg = "ecdh"):
 		self.__host = host
 		self.__port = port
+		self.__alg = alg
 		if alg == "ecdh":
 			self.__server_private_key = ec.generate_private_key(ec.SECP384R1(), default_backend())
 			self.__server_public_key = self.__server_private_key.public_key()
@@ -41,8 +44,9 @@ class server:
 			).derive(self.__shared_key)
 			self.__f = Fernet(base64.urlsafe_b64encode(self.__derived_key))
 		elif alg == "rsa":
-			self.__server_private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend())
+			self.__server_private_key = rsa.generate_private_key(public_exponent=65537, key_size=4096, backend=default_backend())
 			self.__server_public_key = self.__server_private_key.public_key()
+			self.__socket = self.__bind_socket()
 			self.__conn, self.__addr = self.__connect_to_client(self.__socket)
 			self.__client_public_key = self.__server_exchange_keys(self.__conn, self.__server_public_key)
 	# end def __init__
@@ -69,16 +73,33 @@ class server:
 
 	def recv(self):
 		encrypted_message = self.__conn.recv(1024*4)
-		return self.__f.decrypt(encrypted_message)
+		if self.__alg == "ecdh":
+			return self.__f.decrypt(encrypted_message)
+		else: #if alg == rsa
+			cipher_pass = base64.b64decode(encrypted_message);
+			return self.__client_private_key.decrypt(cipher_pass,
+					padding.OAEP(
+					mgf=padding.MGF1(algorithm=hashes.SHA256()),
+					algorithm=hashes.SHA256(),
+					label=None)
+			)
 
 	def send(self, message): #message must be a byte string, otherwise encrypt will fail
-		encrypted_data = self.__f.encrypt(message) #TODO if message message is not a byte string either fail gracefully or try to convert it to a byte string
+		if self.__alg == "ecdh":
+			encrypted_data = self.__f.encrypt(message) #TODO if message message is not a byte string either fail gracefully or try to convert it to a byte string
+		elif self.__alg == "rsa":
+			encrypted_data = self.__server_public_key.encrypt(message, padding.OAEP(
+					mgf=padding.MGF1(algorithm=hashes.SHA256()),
+					algorithm=hashes.SHA256(),
+					label=None)
+			)
 		self.__conn.sendall(encrypted_data)
 
 class client:
 	def __init__(self, host, port, alg = "ecdh"):
 		self.__host = host
 		self.__port = port
+		self.__alg = alg
 		# Elliptic curve Diffie-Hellman
 		if alg == "ecdh":
 			self.__client_private_key = ec.generate_private_key(ec.SECP384R1(), default_backend())
@@ -100,7 +121,7 @@ class client:
 		# RSA encryption
 		elif alg == "rsa":
 			# generate client private key
-			self.__client_private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend())
+			self.__client_private_key = rsa.generate_private_key(public_exponent=65537, key_size=4096, backend=default_backend())
 			# generate client public key from client private key
 			self.__client_public_key = self.__client_private_key.public_key()
 			self.__connected_socket = self.__connect_to_server()
@@ -124,9 +145,25 @@ class client:
 
 	def recv(self):
 		encrypted_message = self.__connected_socket.recv(1024*4)
-		return self.__f.decrypt(encrypted_message)
+		if self.__alg == "ecdh":
+			return self.__f.decrypt(encrypted_message)
+		elif self.__alg == "rsa":
+			cipher_pass = base64.b64decode(encrypted_message);
+			return self.__client_private_key.decrypt(cipher_pass,
+					padding.OAEP(
+					mgf=padding.MGF1(algorithm=hashes.SHA256()),
+					algorithm=hashes.SHA256(),
+					label=None)
+			)
 
 	def send(self, message): #message must be a byte string, otherwise encrypt will fail
-		encrypted_data = self.__f.encrypt(message) #TODO if message message is not a byte string either fail gracefully or try to convert it to a byte string
+		if self.__alg == "ecdh":
+			encrypted_data = self.__f.encrypt(message) #TODO if message message is not a byte string either fail gracefully or try to convert it to a byte string
+		elif self.__alg == "rsa":
+			encrypted_data = self.__client_public_key.encrypt(message, padding.OAEP(
+					mgf=padding.MGF1(algorithm=hashes.SHA256()),
+					algorithm=hashes.SHA256(),
+					label=None)
+			)
 		self.__connected_socket.sendall(encrypted_data)
 
