@@ -33,9 +33,10 @@ class server:
 	#	type: boolean
 	#	purpose: do you want to save keys to file?
 	#default configuration: no previous keys saved, do not save keys to file
-	def __init__(self, host, port, have_public_private_keys=False, save_keys=False, alg = "ecdh"):
+	def __init__(self, host, port, have_public_private_keys=False, save_keys=False, alg="ecdh"):
 		self.__host = host
 		self.__port = port
+		self.__alg = alg
 		self.__socket = self.__bind_socket()
 		self.__conn, self.__addr = self.__connect_to_client(self.__socket)
 		if have_public_private_keys is False and save_keys is False: #case keys need to be generated but not saved
@@ -161,9 +162,10 @@ class server:
 		self.__f = Fernet(base64.urlsafe_b64encode(self.__derived_key))
 
 class client:
-	def __init__(self, host, port, have_public_private_keys=False, save_keys=False, alg = "ecdh"): #have_public_private_keys
+	def __init__(self, host, port, have_public_private_keys=False, save_keys=False, alg="ecdh"): #have_public_private_keys
 		self.__host = host
 		self.__port = port
+		self.__alg = alg
 		if have_public_private_keys is False and save_keys is False: #case generate keys and not save
 			if alg == "ecdh":
 				self.__client_private_key = ec.generate_private_key(ec.SECP384R1(), default_backend())
