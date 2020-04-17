@@ -19,7 +19,7 @@ string="Arrays start at 0. Anyone who disagrees is practising heresy and must be
 test_num=1
 
 debug_test () {
-	echo "======================================================================================   Running test ($test_num/2)  ======================================================================================"
+	echo "=========================   Running test ($test_num/2)  ================================="
 	echo "Sending the following marker string to server (using $1): \"$string\"."
 	echo ""
 	echo "START WIRESHARK OUTPUT"
@@ -46,7 +46,7 @@ debug_test () {
 			echo "As expected, could not find the marker string in the encrypted communication between the client and server."
 		fi
 	fi
-	echo "======================================================================================   Done running test ($test_num/2)  =================================================================================="
+	echo "=====================   Done running test ($test_num/2)  ==============================="
 	test_num=$((test_num+1))
 	rm out.txt
 	return $stat
