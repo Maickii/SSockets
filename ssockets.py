@@ -21,6 +21,9 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives.asymmetric import padding
+
 
 class server:
 	# have_public_private_keys
@@ -30,26 +33,33 @@ class server:
 	#	type: boolean
 	#	purpose: do you want to save keys to file?
 	#default configuration: no previous keys saved, do not save keys to file
-	def __init__(self, host, port, have_public_private_keys=False, save_keys=False):
+	def __init__(self, host, port, have_public_private_keys=False, save_keys=False, alg = "ecdh"):
 		self.__host = host
 		self.__port = port
 		self.__socket = self.__bind_socket()
 		self.__conn, self.__addr = self.__connect_to_client(self.__socket)
-		if have_public_private_keys is False and save_keys is False:
-			self.__server_private_key = ec.generate_private_key(ec.SECP384R1(), default_backend())
+		if have_public_private_keys is False and save_keys is False: #case keys need to be generated but not saved
+			if alg == "ecdh": #elliptic curve key
+				self.__server_private_key = ec.generate_private_key(ec.SECP384R1(), default_backend())
+			elif alg == "rsa":
+				self.__server_private_key = rsa.generate_private_key(public_exponent=65537, key_size=4096, backend=default_backend())
 			self.__server_public_key = self.__server_private_key.public_key()
 			self.__finish_server_connection()
 		elif have_public_private_keys is False and save_keys is True: #case where keys need to be generated and saved
-			self.__server_private_key = ec.generate_private_key(ec.SECP384R1(), default_backend())
+			if alg == "ecdh": #elliptic curve key
+				self.__server_private_key = ec.generate_private_key(ec.SECP384R1(), default_backend())
+			elif alg == "rsa":
+				self.__server_private_key = rsa.generate_private_key(public_exponent=65537, key_size=4096, backend=default_backend())
+			self.__server_public_key = self.__server_private_key.public_key()
+			#end of key generation
 			serialized_private_key = self.__server_private_key.private_bytes(
 				encoding=serialization.Encoding.PEM,
 				format=serialization.PrivateFormat.PKCS8,
 				encryption_algorithm=serialization.BestAvailableEncryption(b'testpassword')
 			)
-			self.__server_public_key = self.__server_private_key.public_key()
 			serialized_public_key = self.__server_public_key.public_bytes(
 				encoding=serialization.Encoding.PEM,
-    			format=serialization.PublicFormat.SubjectPublicKeyInfo
+				format=serialization.PublicFormat.SubjectPublicKeyInfo
 			)
 			self.__finish_server_connection()
 			#open server key file, if does not exist, then create
@@ -90,6 +100,7 @@ class server:
 			self.__server_public_key = loaded_public_key
 
 			self.__finish_server_connection()
+	# end def __init__
 
 	def __bind_socket(self):
 		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -113,10 +124,26 @@ class server:
 
 	def recv(self):
 		encrypted_message = self.__conn.recv(1024*4)
-		return self.__f.decrypt(encrypted_message)
+		if self.__alg == "ecdh":
+			return self.__f.decrypt(encrypted_message)
+		else: #if alg == rsa
+			#cipher_pass = base64.b64decode(encrypted_message);
+			return self.__server_private_key.decrypt(encrypted_message,
+					padding.OAEP(
+					mgf=padding.MGF1(algorithm=hashes.SHA512()),
+					algorithm=hashes.SHA512(),
+					label=None)
+			)
 
 	def send(self, message): #message must be a byte string, otherwise encrypt will fail
-		encrypted_data = self.__f.encrypt(message) #TODO if message message is not a byte string either fail gracefully or try to convert it to a byte string
+		if self.__alg == "ecdh":
+			encrypted_data = self.__f.encrypt(message) #TODO if message message is not a byte string either fail gracefully or try to convert it to a byte string
+		elif self.__alg == "rsa":
+			encrypted_data = self.__server_public_key.encrypt(message, padding.OAEP(
+					mgf=padding.MGF1(algorithm=hashes.SHA512()),
+					algorithm=hashes.SHA512(),
+					label=None)
+			)
 		self.__conn.sendall(encrypted_data)
 
 	def __finish_server_connection(self):
@@ -134,15 +161,21 @@ class server:
 		self.__f = Fernet(base64.urlsafe_b64encode(self.__derived_key))
 
 class client:
-	def __init__(self, host, port, have_public_private_keys=False, save_keys=False): #have_public_private_keys
+	def __init__(self, host, port, have_public_private_keys=False, save_keys=False, alg = "ecdh"): #have_public_private_keys
 		self.__host = host
 		self.__port = port
-		if have_public_private_keys is False and save_keys is False:
-			self.__client_private_key = ec.generate_private_key(ec.SECP384R1(), default_backend())
+		if have_public_private_keys is False and save_keys is False: #case generate keys and not save
+			if alg == "ecdh":
+				self.__client_private_key = ec.generate_private_key(ec.SECP384R1(), default_backend())
+			elif alg == "rsa":
+				self.__client_private_key = rsa.generate_private_key(public_exponent=65537, key_size=4096, backend=default_backend())
 			self.__client_public_key = self.__client_private_key.public_key()
 			self.__finish_client_connection()
-		elif have_public_private_keys is False and save_keys is True:
-			self.__client_private_key = ec.generate_private_key(ec.SECP384R1(), default_backend())
+		elif have_public_private_keys is False and save_keys is True: #case generate and save
+			if alg == "ecdh":
+				self.__client_private_key = ec.generate_private_key(ec.SECP384R1(), default_backend())
+			elif alg == "rsa":
+				self.__client_private_key = rsa.generate_private_key(public_exponent=65537, key_size=4096, backend=default_backend())
 			serialized_private_key = self.__client_private_key.private_bytes(
 				encoding=serialization.Encoding.PEM,
 				format=serialization.PrivateFormat.PKCS8,
@@ -190,6 +223,7 @@ class client:
 			self.__client_public_key = loaded_public_key
 			self.__client_private_key = loaded_private_key
 			self.__finish_client_connection()
+	# end def __init__
 
 	def __connect_to_server(self):
 		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -208,10 +242,26 @@ class client:
 
 	def recv(self):
 		encrypted_message = self.__connected_socket.recv(1024*4)
-		return self.__f.decrypt(encrypted_message)
+		if self.__alg == "ecdh":
+			return self.__f.decrypt(encrypted_message)
+		elif self.__alg == "rsa":
+			#cipher_pass = base64.b64decode(encrypted_message);
+			return self.__client_private_key.decrypt(encrypted_message,
+					padding.OAEP(
+					mgf=padding.MGF1(algorithm=hashes.SHA512()),
+					algorithm=hashes.SHA512(),
+					label=None)
+			)
 
 	def send(self, message): #message must be a byte string, otherwise encrypt will fail
-		encrypted_data = self.__f.encrypt(message) #TODO if message message is not a byte string either fail gracefully or try to convert it to a byte string
+		if self.__alg == "ecdh":
+			encrypted_data = self.__f.encrypt(message) #TODO if message message is not a byte string either fail gracefully or try to convert it to a byte string
+		elif self.__alg == "rsa":
+			encrypted_data = self.__client_public_key.encrypt(message, padding.OAEP(
+					mgf=padding.MGF1(algorithm=hashes.SHA512()),
+					algorithm=hashes.SHA512(),
+					label=None)
+			)
 		self.__connected_socket.sendall(encrypted_data)
 
 	def __finish_client_connection(self):
