@@ -76,11 +76,11 @@ class server:
 		if self.__alg == "ecdh":
 			return self.__f.decrypt(encrypted_message)
 		else: #if alg == rsa
-			cipher_pass = base64.b64decode(encrypted_message);
-			return self.__client_private_key.decrypt(cipher_pass,
+			#cipher_pass = base64.b64decode(encrypted_message);
+			return self.__server_private_key.decrypt(encrypted_message,
 					padding.OAEP(
-					mgf=padding.MGF1(algorithm=hashes.SHA256()),
-					algorithm=hashes.SHA256(),
+					mgf=padding.MGF1(algorithm=hashes.SHA512()),
+					algorithm=hashes.SHA512(),
 					label=None)
 			)
 
@@ -89,8 +89,8 @@ class server:
 			encrypted_data = self.__f.encrypt(message) #TODO if message message is not a byte string either fail gracefully or try to convert it to a byte string
 		elif self.__alg == "rsa":
 			encrypted_data = self.__server_public_key.encrypt(message, padding.OAEP(
-					mgf=padding.MGF1(algorithm=hashes.SHA256()),
-					algorithm=hashes.SHA256(),
+					mgf=padding.MGF1(algorithm=hashes.SHA512()),
+					algorithm=hashes.SHA512(),
 					label=None)
 			)
 		self.__conn.sendall(encrypted_data)
@@ -148,11 +148,11 @@ class client:
 		if self.__alg == "ecdh":
 			return self.__f.decrypt(encrypted_message)
 		elif self.__alg == "rsa":
-			cipher_pass = base64.b64decode(encrypted_message);
-			return self.__client_private_key.decrypt(cipher_pass,
+			#cipher_pass = base64.b64decode(encrypted_message);
+			return self.__client_private_key.decrypt(encrypted_message,
 					padding.OAEP(
-					mgf=padding.MGF1(algorithm=hashes.SHA256()),
-					algorithm=hashes.SHA256(),
+					mgf=padding.MGF1(algorithm=hashes.SHA512()),
+					algorithm=hashes.SHA512(),
 					label=None)
 			)
 
@@ -161,8 +161,8 @@ class client:
 			encrypted_data = self.__f.encrypt(message) #TODO if message message is not a byte string either fail gracefully or try to convert it to a byte string
 		elif self.__alg == "rsa":
 			encrypted_data = self.__client_public_key.encrypt(message, padding.OAEP(
-					mgf=padding.MGF1(algorithm=hashes.SHA256()),
-					algorithm=hashes.SHA256(),
+					mgf=padding.MGF1(algorithm=hashes.SHA512()),
+					algorithm=hashes.SHA512(),
 					label=None)
 			)
 		self.__connected_socket.sendall(encrypted_data)
