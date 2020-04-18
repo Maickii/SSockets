@@ -5,7 +5,6 @@ sys.path.append(os.path.abspath('.'))
 from ssockets import client
 
 myclient = client("127.0.0.1", 65001,False,False, "ecdh")
-print(dir(myclient))
 data = b"It's me, the client talking, I'm using a elipitic curve key!"
 print("[CLIENT] Sending the following data to the server: \"" + str(data, 'utf-8') + "\"")
 myclient.send(data)
