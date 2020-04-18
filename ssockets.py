@@ -271,11 +271,11 @@ class client:
 		self.__server_public_key = self.__client_exchange_keys(self.__connected_socket, self.__client_public_key)
 		if self.__server_public_key:
 			self.__shared_key = self.__client_private_key.exchange(ec.ECDH(), self.__server_public_key)
-		self.__derived_key = HKDF(
-			algorithm=hashes.SHA256(),
-			length=32,
-			salt=None,
-			info=b'handshake data',
-			backend=default_backend()
-		).derive(self.__shared_key)
+			self.__derived_key = HKDF(
+				algorithm=hashes.SHA256(),
+				length=32,
+				salt=None,
+				info=b'handshake data',
+				backend=default_backend()
+				).derive(self.__shared_key)
 		self.__f = Fernet(base64.urlsafe_b64encode(self.__derived_key))
