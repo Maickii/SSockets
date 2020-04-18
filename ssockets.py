@@ -123,8 +123,13 @@ class server:
 		conn.sendall(server_public_key_bytes)
 		return client_public_key
 
-	def recv(self):
+	def recv(self, raw=False):
+		# Raw means dont decrypt data, just return it as is
 		encrypted_message = self.__conn.recv(1024*4)
+		if len(encrypted_message) == 0:
+			return b''
+		if raw:
+			return encrypted_message
 		if self.__alg == "ecdh":
 			return self.__f.decrypt(encrypted_message)
 		else: #if alg == rsa
@@ -136,7 +141,10 @@ class server:
 					label=None)
 			)
 
-	def send(self, message): #message must be a byte string, otherwise encrypt will fail
+	def send(self, message, use_encryption_flag_____do_not_set_to_false_unless_you_know_what_you_are_doing=True): #message must be a byte string, otherwise encrypt will fail
+		if not use_encryption_flag_____do_not_set_to_false_unless_you_know_what_you_are_doing:
+			self.__conn.sendall(message)
+			return
 		if self.__alg == "ecdh":
 			encrypted_data = self.__f.encrypt(message) #TODO if message message is not a byte string either fail gracefully or try to convert it to a byte string
 		elif self.__alg == "rsa":
@@ -242,8 +250,13 @@ class client:
 		server_public_key = serialization.load_pem_public_key(server_public_key_bytes, backend=default_backend())
 		return server_public_key
 
-	def recv(self):
+	def recv(self, raw=False):
+		# Raw means dont decrypt data, just return it as is
 		encrypted_message = self.__connected_socket.recv(1024*4)
+		if len(encrypted_message) == 0:
+			return b''
+		if raw:
+			return encrypted_message
 		if self.__alg == "ecdh":
 			return self.__f.decrypt(encrypted_message)
 		elif self.__alg == "rsa":
@@ -255,7 +268,10 @@ class client:
 					label=None)
 			)
 
-	def send(self, message): #message must be a byte string, otherwise encrypt will fail
+	def send(self, message, use_encryption_flag_____do_not_set_to_false_unless_you_know_what_you_are_doing=True): #message must be a byte string, otherwise encrypt will fail
+		if not use_encryption_flag_____do_not_set_to_false_unless_you_know_what_you_are_doing:
+			self.__connected_socket.sendall(message)
+			return
 		if self.__alg == "ecdh":
 			encrypted_data = self.__f.encrypt(message) #TODO if message message is not a byte string either fail gracefully or try to convert it to a byte string
 		elif self.__alg == "rsa":
