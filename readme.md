@@ -29,9 +29,14 @@ sudo pip3 install cryptography
 ```bash
 sudo apt-get install tshark
 ```
-# Install
-To build the python wheel, after the repository is cloned, change directories into the SSockets library and run:
-  `python3 setup.py install`
+## To Build Python Wheel
+To build the python wheel:
+  Clone Repo: `git clone https://github.com/Maickii/SSockets.git`
+  Change directory to Repo using the cd command (the name of the directory is SSockets)
+  Install Python Setup Tools using:
+    'pip3 install --upgrade pip setuptools'
+  Run the following command in the terminal:
+    `python3 setup.py install`
 Now you will be able to utilize our library, anywhere on your system!
 
 # Usage
