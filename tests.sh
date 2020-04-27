@@ -82,6 +82,7 @@ c7errors(){
 TWONE=0
 C1=0
 python3 s_test1.py > output_server.txt &
+sleep 2
 python3 c_test1.py > output_client.txt
 TWONE=$((TWONE+$(s0errors)+$(s1errors)+$(s2errors)+$(s3errors)+$(s4errors)+$(s5errors)+$(s6errors)+$(c0errors)+$(c1errors)+$(c2errors)+$(c3errors)+$(c4errors)+$(c5errors)+$(c6errors)+$(c7errors)))
 if [ $TWONE -ne 0 ]
@@ -97,6 +98,7 @@ touch client_keys.pem
 TWTWO=0
 C2=0
 python3 s_test2.py > output_server.txt &
+sleep 2
 python3 c_test2.py > output_client.txt
 TWTWO=$((TWTWO+$(s0errors)+$(s1errors)+$(s2errors)+$(s3errors)+$(s4errors)+$(s5errors)+$(s6errors)+$(c0errors)+$(c1errors)+$(c2errors)+$(c3errors)+$(c4errors)+$(c5errors)+$(c6errors)+$(c7errors)))
 if [ $TWTWO -ne 0 ]
@@ -111,6 +113,7 @@ rm output_client.txt
 TWTHREE=0
 C3=0
 python3 s_test3.py > output_server.txt &
+sleep 2
 python3 c_test3.py > output_client.txt
 TWTHREE=$((TWTHREE+$(s0errors)+$(s1errors)+$(s2errors)+$(s3errors)+$(s4errors)+$(s5errors)+$(s6errors)+$(c0errors)+$(c1errors)+$(c2errors)+$(c3errors)+$(c4errors)+$(c5errors)+$(c6errors)+$(c7errors)))
 if [ $TWTHREE -ne 0 ]
@@ -123,6 +126,7 @@ fi
 TWFOUR=0
 C4=0
 python3 s_test4.py > output_server.txt &
+sleep 2
 python3 c_test4.py > output_client.txt
 TWFOUR=$((TWFOUR+$(s0errors)+$(s1errors)+$(s2errors)+$(s3errors)+$(s4errors)+$(s5errors)+$(s6errors)+$(c0errors)+$(c1errors)+$(c2errors)+$(c3errors)+$(c4errors)+$(c5errors)+$(c6errors)+$(c7errors)))
 if [ $TWFOUR -ne 0 ]
@@ -138,6 +142,7 @@ rm server_keys.pem
 TWSIX=0
 C6=0
 python3 s_test6.py > output_server.txt &
+sleep 2
 python3 c_test6.py > output_client.txt
 TWSIX=$((TWSIX+$(s0errors)+$(s1errors)+$(s2errors)+$(s3errors)+$(s4errors)+$(s5errors)+$(s6errors)+$(c0errors)+$(c1errors)+$(c2errors)+$(c3errors)+$(c4errors)+$(c5errors)+$(c6errors)+$(c7errors)))
 if [ $TWSIX -ne 0 ]

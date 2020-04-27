@@ -9,9 +9,9 @@ dist: bionic
 os: linux
 
 #before_install: ./.ci/${TRAVIS_OS_NAME}-setup.sh
-script: sudo ./tests/legacy/test.sh && sudo ./tests/new_api/test.sh && sudo ./tests/crypto_custom/test.sh
+script: cd tests && sudo ./run_all_tests.sh
 
 install:
-    - sudo apt-get install python3-pip
-    - sudo pip3 install cryptography
-    - sudo apt-get install tshark
+    - sudo apt-get install python3-pip tshark
+    - sudo pip3 install setuptools cryptography
+    - sudo python3 setup.py install
