@@ -29,8 +29,13 @@ sudo pip3 install cryptography
 ```bash
 sudo apt-get install tshark
 ```
+# Install
+To build the python wheel, after the repository is cloned, change directories into the SSockets library and run:
+  `python3 setup.py install`
+Now you will be able to utilize our library, anywhere on your system!
+
 # Usage
-Open up two terminals and change your current working directory to the repo folder and then open up the interactive python shell using the command `python3`. In one terminal write up the server code and on the other type up the client code. Alternatively you can run the test `./tests/new_api/test.sh` which is the same as this example.
+Open up two terminals and change your current working directory to the repo folder and then open up the interactive python shell using the command `python3`. In one terminal write up the server code and on the other type up the client code. Alternatively you can run the test `cd tests/new_api/ && ./test.sh` which is the same test as this example.
 
 **Server process**
 ```python
@@ -62,7 +67,8 @@ The client does the reverse process when it calls `myclient.send(data)`. It firs
 # Running tests
 Run a simple test on legacy code. Root access is required for tshark.
 ```bash
-sudo ./tests/legacy/test.sh
+cd tests/legacy/
+sudo ./test.sh
 ```
 This test will perform the following actions
 1. Spawn a server process in the background that will listen in for incoming connections on localhost (loopback interface) on port 60000
@@ -71,20 +77,15 @@ This test will perform the following actions
     1. The first time the client communicates with the server, the client will send a plaintext string to make sure that we can successfully communicate with the server over the loopback interface and that tshark is capable of catching that plaintext string. The test fails if tshark does not catch the string
     1. The second time the client communicates with the server, the client will perform a public key exchange with the server, derive a shared key, and then encrypt the same plaintext string on part (i), and finally send the now encrypted string over to the server. tshark will inform it if it sees the same plaintext data. The test fails if tshark manages to catch the plaintext string
 
-An alternative test can be invoked by running `./tests/new_api/test.sh`
+An alternative test can be invoked by running `cd tests/new_api/ && ./test.sh`
 
-##Generating Results
+## Generating Results
 To generate results, first install Python's pandas library and matplotlib library
-    python3 -m pip install -U matplotlib
-    python3 -m pip install pandas
-Then run tests.sh
-If error: permission denied occurs, solve by:
-    chmod +x ssockets/tests/new_api/generate_result.sh
-
-##Building the Python Wheel
-To build the python wheel, after the repository is cloned, change directories into the SSockets library and run:
-  python3 setup.py install
-Now you will be able to utilize our library, anywhere on your system! 
+```bash
+python3 -m pip install -U matplotlib
+python3 -m pip install pandas
+```
+Then run `./tests.sh`
 
 # Bugs
 You may run into errors such as `OSError: [Errno 98] Address already in use`. This is _probably_ due to the server not cleaning up properly on exit. If you do get this error just wait 5 minutes and try again. The kernel will clean up sometime after the process has exited. This is a known bug that we are trying to fix
