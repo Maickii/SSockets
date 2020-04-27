@@ -51,6 +51,4 @@ debug_test () {
 	return $stat
 }
 
-cd tests/legacy/
-
 debug_test plain && echo -en "\n\n\n\n" && ! debug_test encrypted
