@@ -156,3 +156,4 @@ rm output_client.txt
 touch results.txt
 echo $C1 $C2 $C3 $C4 $C6 > results.txt
 python3 gen_graph.py
+rm results.txt
